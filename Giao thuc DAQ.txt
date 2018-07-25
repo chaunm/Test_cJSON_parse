@@ -1,0 +1,22 @@
+A. Configure
+1. BTS Name
+2. Temperature threshold 1 - 4
+3. Access ID [ 1 - 5 ]
+4. Phase thread hold voltage
+5. Battery thresh hold voltage 1 - 2
+6. Aircon set temp [1-4]
+7. IP address
+8. Gateway
+9. subnet mask
+10. server address.
+11. server port
+12. client port
+
+B. control
+1. Door: Open/Close
+2. Alarm
+3. Fan 1
+4. Fan 2
+5. Aircon 1
+6. Aircon 2
+7. ATS

@@ -8,32 +8,102 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "mqtt_json_parse.h"
+#include "mqtt_json_make.h"
+#include "mqtt_json_type.h"
+#include "cJSON.h"
 
-/* Make response data */
-static char* mqtt_json_make_response(char* boxID, unsigned int messageID, char* result, mqtt_json_parse_result_t errorCode)
-{
-	cJSON *jsonResponse;
-	char* responseMessage;
-	jsonResponse = cJSON_CreateObject();
-	if (jsonResponse == NULL)
-	{
-		printf("Not enough memory to create json response message\r\n");
-		return NULL;
-	}
-	cJSON_AddStringToObject(jsonResponse, "id", boxID);
-	cJSON_AddNumberToObject(jsonResponse, "message_id", messageID);
-	cJSON_AddStringToObject(jsonResponse, "result", result);
-	cJSON_AddNumberToObject(jsonResponse, "error_code", errorCode);
-	responseMessage = cJSON_Print(jsonResponse);
-	cJSON_Delete(jsonResponse);
-	return responseMessage;
-}
+
 
 /***********************************************************************************************************
  *                                        CONFIGURE MESSAGE PARSING                                        *
  ***********************************************************************************************************/
+/* parse temperature threshold */
+static mqtt_json_result_t mqtt_json_parse_conigure_temp_threshold(cJSON* jsonMessage)
+{
+	cJSON* tempThresJson;
+	cJSON* tempJson;
+	cJSON* indexJson;
+	tempThresJson = cJSON_GetObjectItem(jsonMessage, "data");
+	if (!cJSON_IsObject(tempThresJson))
+		return MQTT_PARSE_DATA_ERROR;
+	indexJson = cJSON_GetObjectItem(tempThresJson,  "index");
+	if (!cJSON_IsNumber(indexJson))
+		return MQTT_PARSE_DATA_ERROR;
+	if ((indexJson->valueint > 4) || (indexJson->valueint < 1))
+		return MQTT_PARSE_DATA_ERROR;
+	tempJson = cJSON_GetObjectItem(tempThresJson,  "temperature");
+	if (!cJSON_IsNumber(tempJson))
+		return MQTT_PARSE_DATA_ERROR;
+	printf("Temperature threshold index: %d, value %d\r\n", indexJson->valueint, tempJson->valueint);
+	return MQTT_PARSE_SUCCESS;
+}
+/* Parse card ID configuration message */
+static mqtt_json_result_t mqtt_json_parse_configure_card_id(cJSON* jsonMessage)
+{
+	cJSON* cardIdJson;
+	cJSON* cardIdIndex;
+	cJSON* cardId;
+	cardIdJson = cJSON_GetObjectItem(jsonMessage, "data");
+	if (!cJSON_IsObject(cardIdJson))
+		return MQTT_PARSE_DATA_ERROR;
+	cardIdIndex = cJSON_GetObjectItem(cardIdJson, "index");
+	if (!cJSON_IsNumber(cardIdIndex))
+		return MQTT_PARSE_DATA_ERROR;
+	if ((cardIdIndex->valueint > 5) || (cardIdIndex->valueint < 1))
+		return MQTT_PARSE_DATA_ERROR;
+	cardId = cJSON_GetObjectItem(cardIdJson, "card_id");
+	if ((!cJSON_IsString(cardId)) || (cardId->valuestring == NULL))
+		return MQTT_PARSE_DATA_ERROR;
+	if (strlen(cardId->valuestring) != 8)
+		return MQTT_PARSE_DATA_ERROR;
+	printf("Card Id index: %d, ID: %s\r\n", cardIdIndex->valueint, cardId->valuestring);
+	return MQTT_PARSE_SUCCESS;
+}
+
+/* Parse battery threshold configuration message */
+static mqtt_json_result_t mqtt_json_parse_configure_battery_threshold(cJSON* jsonMessage)
+{
+	cJSON* batteryThresJson;
+	cJSON* indexJson;
+	cJSON* batteryVoltJson;
+	batteryThresJson = cJSON_GetObjectItem(jsonMessage, "data");
+	if (!(cJSON_IsObject(batteryThresJson)))
+		return MQTT_PARSE_DATA_ERROR;
+	indexJson = cJSON_GetObjectItem(batteryThresJson, "index");
+	if (!cJSON_IsNumber(indexJson))
+		return MQTT_PARSE_DATA_ERROR;
+	if ((indexJson->valueint > 5) || (indexJson->valueint < 1))
+		return MQTT_PARSE_DATA_ERROR;
+	batteryVoltJson = cJSON_GetObjectItem(batteryThresJson, "battery_threshold");
+	if (!cJSON_IsNumber(batteryVoltJson))
+		return MQTT_PARSE_DATA_ERROR;
+	printf("Battery threshold index: %d, threshold: %d\r\n", indexJson->valueint, batteryVoltJson->valueint);
+	return MQTT_PARSE_SUCCESS;
+}
+
+/* Parse aircon set temperature configuration message */
+static mqtt_json_result_t mqtt_json_parse_configure_aircon_temperature(cJSON* jsonMessage)
+{
+	cJSON* acTempJson;
+	cJSON* indexJson;
+	cJSON* tempJson;
+	acTempJson = cJSON_GetObjectItem(jsonMessage, "data");
+	if (!(cJSON_IsObject(acTempJson)))
+		return MQTT_PARSE_DATA_ERROR;
+	indexJson = cJSON_GetObjectItem(acTempJson, "index");
+	if (!cJSON_IsNumber(indexJson))
+		return MQTT_PARSE_DATA_ERROR;
+	if ((indexJson->valueint > 5) || (indexJson->valueint < 1))
+		return MQTT_PARSE_DATA_ERROR;
+	tempJson = cJSON_GetObjectItem(acTempJson, "temperature");
+	if (!cJSON_IsNumber(tempJson))
+		return MQTT_PARSE_DATA_ERROR;
+	printf("aircon set temp index: %d, threshold: %d\r\n", indexJson->valueint, tempJson->valueint);
+	return MQTT_PARSE_SUCCESS;
+}
+
 /* Parse configuration message */
-static mqtt_json_parse_result_t mqtt_json_parse_configure_message(cJSON* jsonMessage)
+static mqtt_json_result_t mqtt_json_parse_configure_message(cJSON* jsonMessage)
 {
 	cJSON *jsonParameter;
 	cJSON *jsonMsgData;
@@ -47,6 +117,30 @@ static mqtt_json_parse_result_t mqtt_json_parse_configure_message(cJSON* jsonMes
 			{
 				printf("Configure param: %s, value: %s\r\n", jsonParameter->valuestring, jsonMsgData->valuestring);
 			}
+		}
+		else if (!strcmp(jsonParameter->valuestring, "temperature_threshold"))
+		{
+			return mqtt_json_parse_conigure_temp_threshold(jsonMessage);
+		}
+		else if (!strcmp(jsonParameter->valuestring, "card_id"))
+		{
+			return mqtt_json_parse_configure_card_id(jsonMessage);
+		}
+		else if (!strcmp(jsonParameter->valuestring, "phase_threshold_voltage"))
+		{
+			jsonMsgData = cJSON_GetObjectItem(jsonMessage, "data");
+			if (cJSON_IsNumber(jsonMsgData))
+			{
+				printf("Configure param: %s, value: %d\r\n", jsonParameter->valuestring, jsonMsgData->valueint);
+			}
+		}
+		else if (!strcmp(jsonParameter->valuestring, "battery_threshold"))
+		{
+			return mqtt_json_parse_configure_battery_threshold(jsonMessage);
+		}
+		else if (!strcmp(jsonParameter->valuestring, "aircon_temp"))
+		{
+			return mqtt_json_parse_configure_aircon_temperature(jsonMessage);
 		}
 		else if (!strcmp(jsonParameter->valuestring, "device_ip"))
 		{
@@ -92,7 +186,7 @@ static mqtt_json_parse_result_t mqtt_json_parse_configure_message(cJSON* jsonMes
  *                                        CONTROL MESSAGE PARSING                                          *
  ***********************************************************************************************************/
 /* Parse control door data */
-static mqtt_json_parse_result_t mqtt_json_parse_control_door(char* data)
+static mqtt_json_result_t mqtt_json_parse_control_door(char* data)
 {
 	if (!strcmp(data, "open"))
 	{
@@ -108,7 +202,7 @@ static mqtt_json_parse_result_t mqtt_json_parse_control_door(char* data)
 }
 
 /* Parse control alarm data */
-static mqtt_json_parse_result_t mqtt_json_parse_control_alarm(char* data)
+static mqtt_json_result_t mqtt_json_parse_control_alarm(char* data)
 {
 	if (!strcmp(data, "on"))
 	{
@@ -123,8 +217,52 @@ static mqtt_json_parse_result_t mqtt_json_parse_control_alarm(char* data)
 	return MQTT_PARSE_SUCCESS;
 }
 
+/* Parse control fan data */
+static mqtt_json_result_t mqtt_json_parse_control_fan(char* parameter, char* data)
+{
+	if (!strcmp(data, "on"))
+	{
+		printf("fan %s on command succeed\r\n", parameter);
+	}
+	else if (!strcmp(data, "off"))
+	{
+		printf("fan %s off command succeed\r\n", parameter);
+	}
+	else
+		return MQTT_PARSE_DATA_ERROR;
+	return MQTT_PARSE_SUCCESS;
+}
+
+/* Parse aircon control message */
+static mqtt_json_result_t mqtt_json_parse_control_aircon(cJSON* jsonMessage)
+{
+	cJSON* airconCtrlJson;
+	cJSON* powerJson;
+	cJSON* temperatureJson;
+	cJSON* indexJson;
+	airconCtrlJson = cJSON_GetObjectItem(jsonMessage, "data");
+	if (!(cJSON_IsObject(airconCtrlJson)))
+		return MQTT_PARSE_DATA_ERROR;
+	indexJson = cJSON_GetObjectItem(airconCtrlJson, "index");
+	if (!cJSON_IsNumber(indexJson))
+		return MQTT_PARSE_DATA_ERROR;
+	if ((indexJson->valueint > 2) || (indexJson->valueint < 1))
+		return MQTT_PARSE_DATA_ERROR;
+	powerJson = cJSON_GetObjectItem(airconCtrlJson, "power");
+	if (!cJSON_IsString(powerJson))
+		return MQTT_PARSE_DATA_ERROR;
+	if ((strcmp(powerJson->valuestring, "on") && strcmp(powerJson->valuestring, "off")))
+		return MQTT_PARSE_DATA_ERROR;
+	temperatureJson = cJSON_GetObjectItem(airconCtrlJson, "temperature");
+	if (!cJSON_IsNumber(temperatureJson))
+		return MQTT_PARSE_DATA_ERROR;
+	printf("Aircon control index: %d\r\n", indexJson->valueint);
+	printf("Power: %s, temperature: %d\r\n", powerJson->valuestring, temperatureJson->valueint);
+	return MQTT_PARSE_SUCCESS;
+}
+
 /* parse control message */
-static mqtt_json_parse_result_t mqtt_json_parse_control_message(cJSON* jsonMessage)
+static mqtt_json_result_t mqtt_json_parse_control_message(cJSON* jsonMessage)
 {
 	cJSON *jsonParameter;
 	cJSON *jsonMsgData;
@@ -153,6 +291,32 @@ static mqtt_json_parse_result_t mqtt_json_parse_control_message(cJSON* jsonMessa
 			else
 				return MQTT_PARSE_DATA_ERROR;
 		}
+		else if (!strcmp(jsonParameter->valuestring, "fan_1"))
+		{
+			jsonMsgData = cJSON_GetObjectItem(jsonMessage, "data");
+			if (cJSON_IsString(jsonMsgData) && (jsonMsgData->valuestring != NULL))
+			{
+				printf("Control param: %s, value: %s\r\n", jsonParameter->valuestring, jsonMsgData->valuestring);
+				return mqtt_json_parse_control_fan(jsonParameter->valuestring, jsonMsgData->valuestring);
+			}
+			else
+				return MQTT_PARSE_DATA_ERROR;
+		}
+		else if (!strcmp(jsonParameter->valuestring, "fan_2"))
+		{
+			jsonMsgData = cJSON_GetObjectItem(jsonMessage, "data");
+			if (cJSON_IsString(jsonMsgData) && (jsonMsgData->valuestring != NULL))
+			{
+				printf("Control param: %s, value: %s\r\n", jsonParameter->valuestring, jsonMsgData->valuestring);
+				return mqtt_json_parse_control_fan(jsonParameter->valuestring, jsonMsgData->valuestring);
+			}
+			else
+				return MQTT_PARSE_DATA_ERROR;
+		}
+		else if (!strcmp(jsonParameter->valuestring, "aircon"))
+		{
+			return mqtt_json_parse_control_aircon(jsonMessage);
+		}
 		else
 			return MQTT_PARSE_PARAM_ERROR;
 	}
@@ -168,7 +332,8 @@ void mqtt_json_parse_message(char* message, unsigned int length)
 	cJSON *jsonBoxId;
 	cJSON *jsonMsgId;
 	cJSON *jsonMsgType;
-	mqtt_json_parse_result_t result = MQTT_PARSE_SUCCESS;
+	mqtt_json_result_t result = MQTT_PARSE_SUCCESS;
+	printf("Parse message with length: %d\r\n", length);
 
 	char* responseMessage;
 	if ((message == NULL) || (length == 0))
@@ -229,9 +394,9 @@ void mqtt_json_parse_message(char* message, unsigned int length)
 	if ((result != MQTT_PARSE_MESSAGE_ERROR) && (result != MQTT_PARSE_BOXID_ERROR) && (result != MQTT_PARSE_MSGID_ERROR))
 	{
 		if (result == MQTT_PARSE_SUCCESS)
-			responseMessage = mqtt_json_make_response(jsonBoxId->valuestring, jsonMsgId->valueint, "succeed", result);
+			responseMessage = mqtt_json_make_response(jsonBoxId->valuestring, jsonMsgId->valueint, result);
 		else
-			responseMessage = mqtt_json_make_response(jsonBoxId->valuestring, jsonMsgId->valueint, "failure", result);
+			responseMessage = mqtt_json_make_response(jsonBoxId->valuestring, jsonMsgId->valueint, result);
 		if (responseMessage != NULL)
 		{
 			printf ("response:\n%s\r\n", responseMessage);
