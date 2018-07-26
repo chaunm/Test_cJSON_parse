@@ -72,9 +72,9 @@ static mqtt_json_result_t mqtt_json_parse_configure_battery_threshold(cJSON* jso
 	indexJson = cJSON_GetObjectItem(batteryThresJson, "index");
 	if (!cJSON_IsNumber(indexJson))
 		return MQTT_PARSE_DATA_ERROR;
-	if ((indexJson->valueint > 5) || (indexJson->valueint < 1))
+	if ((indexJson->valueint > 4) || (indexJson->valueint < 1))
 		return MQTT_PARSE_DATA_ERROR;
-	batteryVoltJson = cJSON_GetObjectItem(batteryThresJson, "battery_threshold");
+	batteryVoltJson = cJSON_GetObjectItem(batteryThresJson, "voltage");
 	if (!cJSON_IsNumber(batteryVoltJson))
 		return MQTT_PARSE_DATA_ERROR;
 	printf("Battery threshold index: %d, threshold: %d\r\n", indexJson->valueint, batteryVoltJson->valueint);
@@ -386,6 +386,10 @@ void mqtt_json_parse_message(char* message, unsigned int length)
 	{
 		printf("Parse control message \r\n");
 		result = mqtt_json_parse_control_message(jsonMessage);
+	}
+	else if (!strcmp(jsonMsgType->valuestring, "reset"))
+	{
+		printf("Resetting ...\r\n");
 	}
 	else
 		result = MQTT_PARSE_TYPE_ERROR;

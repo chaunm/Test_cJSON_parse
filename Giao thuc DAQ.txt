@@ -1,22 +1,201 @@
-A. Configure
-1. BTS Name
-2. Temperature threshold 1 - 4
-3. Access ID [ 1 - 5 ]
-4. Phase thread hold voltage
-5. Battery thresh hold voltage 1 - 2
-6. Aircon set temp [1-4]
-7. IP address
-8. Gateway
-9. subnet mask
-10. server address.
-11. server port
-12. client port
+PART I: MESSAGE FROM SERVER TO DEVICE
+A. Configure messages
+1. Set BTS Name
+- Purpose: Use to set BTS Name.
+- Message
+{
+	"id":	"CURRENT_BOX_NAME",
+	"message_id":	"id_of_the_message",
+	"type": 	"config",
+	"parameter":	"id",
+	"data":		"NEW_BOX_NAME"
+}
+- Note: The "NEW_BOX_NAME" is only applied after device reset.
+	
+2. Set Temperature threshold
+- Purpose: Use to set the temperature thresholds, device support 4 thresholds.
+- Message
+{
+	"id":	"CURRENT_BOX_NAME",
+	"message_id":	"id_of_the_message",
+	"type": 	"config",
+	"parameter":	"temperature_threshold",
+	"data":		
+	{
+		"index":	(1 - 4),
+		"temperature":  (interger value)
+	}
+}
 
-B. control
+3. Set Access Card ID
+- Purpose: Use to set id of the RFID card, device support 5 cards.
+- Message
+{
+	"id":	"CURRENT_BOX_NAME",
+	"message_id":	"id_of_the_message",
+	"type": 	"config",
+	"parameter":	"card_id",
+	"data":		
+	{
+		"index":	(1 - 5),
+		"card_id":  "8_byte_card_id"
+	}
+}
+
+4. Set phase thread hold voltage
+- Purpose: Use to set AC low threshold voltage.
+- Message
+{
+	"id":	"CURRENT_BOX_NAME",
+	"message_id":	"id_of_the_message",
+	"type": 	"config",
+	"parameter":	"phase_threshold_voltage",
+	"data":		voltage_in_interger
+}
+
+5. Battery thresh hold voltage
+- Purpose: Use to set batteries low threshold, device support 4 thresholds.
+- Message
+{
+	"id":	"CURRENT_BOX_NAME",
+	"message_id":	"id_of_the_message",
+	"type": 	"config",
+	"parameter":	"battery_threshold",
+	"data":		
+	{
+		"index":	(1 - 4),
+		"voltage":  voltage in integer
+	}
+}
+
+6. Aircon set temp [1-4]
+- Purpose: Use to set aircon temperature, device support 4 set temperatures.
+- Message
+{
+	"id":	"CURRENT_BOX_NAME",
+	"message_id":	"id_of_the_message",
+	"type": 	"config",
+	"parameter":	"aircon_temp",
+	"data":		
+	{
+		"index":	(1 - 4),
+		"temperature":  temperature in integer
+	}
+}
+7. Set device IP address
+- Purpose: Use to set device IP address
+- Message
+{
+	"id":	"CURRENT_BOX_NAME",
+	"message_id":	"id_of_the_message",
+	"type": 	"config",
+	"parameter":	"device_ip",
+	"data":		"ip_address" (ex. "192.168.1.23")
+}
+- Note: The new ip address is only applied after device reset.
+
+8. Set gateway
+- Purpose: Use to set device IP address
+- Message
+{
+	"id":	"CURRENT_BOX_NAME",
+	"message_id":	"id_of_the_message",
+	"type": 	"config",
+	"parameter":	"gateway",
+	"data":		"gateway" (ex. "192.168.1.1")
+}
+- Note: The new gateway is only applied after device reset.
+
+9. Set subnet mask
+- Purpose: Use to set gateway
+- Message
+{
+	"id":	"CURRENT_BOX_NAME",
+	"message_id":	"id_of_the_message",
+	"type": 	"config",
+	"parameter":	"gateway",
+	"data":		"gateway" (ex. "255.255.255.0")
+}
+- Note: The new gateway is only applied after device reset.
+
+10. server address.
+- Purpose: Use to set gateway
+- Message
+{
+	"id":	"CURRENT_BOX_NAME",
+	"message_id":	"id_of_the_message",
+	"type": 	"config",
+	"parameter":	"server_ip",
+	"data":		"ip_address" (ex. "192.168.1.3")
+}
+- Note: The new gateway is only applied after device reset.
+
+
+B. Control messages
 1. Door: Open/Close
+- Purpuse: Use to open/close the door
+- Message: 
+{
+	"id":	"CURRENT_BOX_NAME",
+	"message_id":	"id_of_the_message",
+	"type": 	"control",
+	"parameter":	"door",
+	"data":		"open"/"close"
+}
+
 2. Alarm
+- Purpuse: Use to on/off the alarm
+- Message: 
+{
+	"id":	"CURRENT_BOX_NAME",
+	"message_id":	"id_of_the_message",
+	"type": 	"control",
+	"parameter":	"alarm",
+	"data":		"on"/"off"
+}
+
 3. Fan 1
+- Purpuse: Use to on/off the fan
+- Message: 
+{
+	"id":	"CURRENT_BOX_NAME",
+	"message_id":	"id_of_the_message",
+	"type": 	"control",
+	"parameter":	"fan_1",
+	"data":		"on"/"off"
+}
+
 4. Fan 2
-5. Aircon 1
-6. Aircon 2
-7. ATS
+- Purpuse: Use to on/off the fan
+- Message: 
+{
+	"id":	"CURRENT_BOX_NAME",
+	"message_id":	"id_of_the_message",
+	"type": 	"control",
+	"parameter":	"fan_2",
+	"data":		"on"/"off"
+}
+5. Aircon
+- Purpuse: Use to control the aircon. The device support 2 aircons.
+- Message: 
+{
+	"id":	"CURRENT_BOX_NAME",
+	"message_id":	"id_of_the_message",
+	"type": 	"control",
+	"parameter":	"aircon",
+	"data":		
+	{
+		"index":	1..2,
+		"power":	"on"/"off",
+		"temperature:	temperature_in_interger
+	}
+}
+
+6. Reset
+- Purpuse: Use to reset the device
+- Message: 
+{
+	"id":	"CURRENT_BOX_NAME",
+	"message_id":	"id_of_the_message",
+	"type": 	"reset"
+}
