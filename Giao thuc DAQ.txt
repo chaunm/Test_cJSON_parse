@@ -1,11 +1,19 @@
-PART I: MESSAGE FROM SERVER TO DEVICE
+PREFACE:
+Device connect to server through MQTT broker.
+To send a message to device: Publish message to topics: 
+- DAQ/BOX_NAME
+To receive device's update message: Subscribe to below topics: 
+- DAQ/event: for device to update status/alarm
+- DAQ/response: device to response to the request message from server
+
+PART I: MESSAGE FROM SERVER TO DEVICE (by publishing the DAQ/BOX_NAME topics)
 A. Configure messages
 1. Set BTS Name
 - Purpose: Use to set BTS Name.
 - Message
 {
 	"id":	"CURRENT_BOX_NAME",
-	"message_id":	"id_of_the_message",
+	"message_id":	id_in_interger,
 	"type": 	"config",
 	"parameter":	"id",
 	"data":		"NEW_BOX_NAME"
@@ -17,7 +25,7 @@ A. Configure messages
 - Message
 {
 	"id":	"CURRENT_BOX_NAME",
-	"message_id":	"id_of_the_message",
+	"message_id":	id_in_interger,
 	"type": 	"config",
 	"parameter":	"temperature_threshold",
 	"data":		
@@ -32,7 +40,7 @@ A. Configure messages
 - Message
 {
 	"id":	"CURRENT_BOX_NAME",
-	"message_id":	"id_of_the_message",
+	"message_id":	id_in_interger,
 	"type": 	"config",
 	"parameter":	"card_id",
 	"data":		
@@ -47,7 +55,7 @@ A. Configure messages
 - Message
 {
 	"id":	"CURRENT_BOX_NAME",
-	"message_id":	"id_of_the_message",
+	"message_id":	id_in_interger,
 	"type": 	"config",
 	"parameter":	"phase_threshold_voltage",
 	"data":		voltage_in_interger
@@ -58,7 +66,7 @@ A. Configure messages
 - Message
 {
 	"id":	"CURRENT_BOX_NAME",
-	"message_id":	"id_of_the_message",
+	"message_id":	id_in_interger,
 	"type": 	"config",
 	"parameter":	"battery_threshold",
 	"data":		
@@ -73,7 +81,7 @@ A. Configure messages
 - Message
 {
 	"id":	"CURRENT_BOX_NAME",
-	"message_id":	"id_of_the_message",
+	"message_id":	id_in_interger,
 	"type": 	"config",
 	"parameter":	"aircon_temp",
 	"data":		
@@ -87,7 +95,7 @@ A. Configure messages
 - Message
 {
 	"id":	"CURRENT_BOX_NAME",
-	"message_id":	"id_of_the_message",
+	"message_id":	id_in_interger,
 	"type": 	"config",
 	"parameter":	"device_ip",
 	"data":		"ip_address" (ex. "192.168.1.23")
@@ -99,7 +107,7 @@ A. Configure messages
 - Message
 {
 	"id":	"CURRENT_BOX_NAME",
-	"message_id":	"id_of_the_message",
+	"message_id":	id_in_interger,
 	"type": 	"config",
 	"parameter":	"gateway",
 	"data":		"gateway" (ex. "192.168.1.1")
@@ -111,7 +119,7 @@ A. Configure messages
 - Message
 {
 	"id":	"CURRENT_BOX_NAME",
-	"message_id":	"id_of_the_message",
+	"message_id":	id_in_interger,
 	"type": 	"config",
 	"parameter":	"gateway",
 	"data":		"gateway" (ex. "255.255.255.0")
@@ -123,7 +131,7 @@ A. Configure messages
 - Message
 {
 	"id":	"CURRENT_BOX_NAME",
-	"message_id":	"id_of_the_message",
+	"message_id":	id_in_interger,
 	"type": 	"config",
 	"parameter":	"server_ip",
 	"data":		"ip_address" (ex. "192.168.1.3")
@@ -137,7 +145,7 @@ B. Control messages
 - Message: 
 {
 	"id":	"CURRENT_BOX_NAME",
-	"message_id":	"id_of_the_message",
+	"message_id":	id_in_interger,
 	"type": 	"control",
 	"parameter":	"door",
 	"data":		"open"/"close"
@@ -148,7 +156,7 @@ B. Control messages
 - Message: 
 {
 	"id":	"CURRENT_BOX_NAME",
-	"message_id":	"id_of_the_message",
+	"message_id":	id_in_interger,
 	"type": 	"control",
 	"parameter":	"alarm",
 	"data":		"on"/"off"
@@ -159,7 +167,7 @@ B. Control messages
 - Message: 
 {
 	"id":	"CURRENT_BOX_NAME",
-	"message_id":	"id_of_the_message",
+	"message_id":	id_in_interger,
 	"type": 	"control",
 	"parameter":	"fan_1",
 	"data":		"on"/"off"
@@ -170,7 +178,7 @@ B. Control messages
 - Message: 
 {
 	"id":	"CURRENT_BOX_NAME",
-	"message_id":	"id_of_the_message",
+	"message_id":	id_in_interger,
 	"type": 	"control",
 	"parameter":	"fan_2",
 	"data":		"on"/"off"
@@ -180,7 +188,7 @@ B. Control messages
 - Message: 
 {
 	"id":	"CURRENT_BOX_NAME",
-	"message_id":	"id_of_the_message",
+	"message_id":	id_in_interger,
 	"type": 	"control",
 	"parameter":	"aircon",
 	"data":		
@@ -196,6 +204,25 @@ B. Control messages
 - Message: 
 {
 	"id":	"CURRENT_BOX_NAME",
-	"message_id":	"id_of_the_message",
+	"message_id":	id_in_interger,
 	"type": 	"reset"
 }
+
+PART 2: MESSAGE FROM DEVICE TO SERVER
+1. Response message
+Purpose: Device publishs the response messages to topic DAQ/response topic to confirm about the request messages that device receives from server.
+- Message:
+{
+	"id":	"CURRENT_BOX_NAME",
+	"message_id":	id_in_interger,
+	"error_code": 	integer
+}
+- The error code is defined as below
+
+	MQTT_PARSE_SUCCESS	= 0,
+	MQTT_PARSE_MESSAGE_ERROR = 1,
+	MQTT_PARSE_BOXID_ERROR = 2,
+	MQTT_PARSE_MSGID_ERROR = 3,
+	MQTT_PARSE_TYPE_ERROR = 4,
+	MQTT_PARSE_PARAM_ERROR = 5,
+	MQTT_PARSE_DATA_ERROR = 6.
